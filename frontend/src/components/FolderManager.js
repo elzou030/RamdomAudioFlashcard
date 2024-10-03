@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function FolderManager() {
+const FolderManager = () => {
   const [folders, setFolders] = useState([]);
   const [newFolder, setNewFolder] = useState('');
   const [selectedFolder, setSelectedFolder] = useState('');
@@ -10,12 +10,14 @@ function FolderManager() {
     fetchFolders();
   }, []);
 
+  // Fetch the list of folders
   const fetchFolders = async () => {
     const response = await fetch('http://localhost:5100/api/folders');
     const data = await response.json();
     setFolders(data.folders);
   };
 
+  // Fetch songs in the selected folder
   const fetchSongs = async (folderName) => {
     const response = await fetch(`http://localhost:5100/api/folders/${folderName}/songs`);
     const data = await response.json();
@@ -23,20 +25,31 @@ function FolderManager() {
     setSelectedFolder(folderName);
   };
 
+  // Handle creating a new folder
   const handleCreateFolder = async () => {
-    if (!newFolder) return;
+    if (!newFolder) {
+      alert("Please enter a folder name");
+      return;
+    }
 
-    const response = await fetch('http://localhost:5100/api/create-folder', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ folderName: newFolder }),
-    });
+    try {
+      const response = await fetch('http://localhost:5100/api/create-folder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderName: newFolder }),
+      });
 
-    if (response.ok) {
-      alert('Folder created successfully');
-      setNewFolder('');
-      fetchFolders();
-    } else {
+      if (response.ok) {
+        const data = await response.json();
+        alert(data.message);  // Notify the user about success
+        setNewFolder('');     // Clear the input field
+        fetchFolders();       // Refresh the folder list
+      } else {
+        const error = await response.json();
+        alert(error.message);  // Display any error message
+      }
+    } catch (error) {
+      console.error('Error creating folder:', error);
       alert('Failed to create folder');
     }
   };
@@ -55,8 +68,8 @@ function FolderManager() {
       </div>
       <ul>
         {folders.map(folder => (
-          <li key={folder}>
-            <span onClick={() => fetchSongs(folder)}>{folder}</span>
+          <li key={folder} onClick={() => fetchSongs(folder)}>
+            {folder}
           </li>
         ))}
       </ul>
@@ -73,6 +86,6 @@ function FolderManager() {
       )}
     </div>
   );
-}
+};
 
 export default FolderManager;

@@ -1,15 +1,22 @@
 const express = require('express');
-const cors = require('cors');
 const path = require('path');
+const cors = require('cors');
+const flashcardsRouter = require('./routes/flashcards');
 
 const app = express();
-const flashcardRoutes = require('./routes/flashcards');
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-app.use('/api', flashcardRoutes);
+// Use routes
+app.use('/api', flashcardsRouter);
 
-app.listen(5100, () => {
-  console.log('Server is running on http://localhost:5100');
+// Serve static files (if needed, e.g., for uploaded songs)
+app.use('/uploads', express.static('uploads'));
+
+// Start the server
+const PORT = 5100;
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

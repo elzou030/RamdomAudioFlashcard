@@ -15,25 +15,25 @@ function UploadSong({ setSongFilename }) {
   };
 
   const handleUpload = async () => {
-    if (!file) {
-      alert('Please select a song to upload');
+    if (!file || !folder) {
+      alert('Please select a song and folder');
       return;
     }
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('folderName', folder);
+    formData.append('folderName', folder);  // Correctly send folder name
 
     try {
       const response = await fetch('http://localhost:5100/api/upload', {
         method: 'POST',
-        body: formData,
+        body: formData,  // Send the form data
       });
 
       if (response.ok) {
         const data = await response.json();
-        alert(data.message);
-        setSongFilename(file.name);
+        alert(data.message);  // Notify about the success
+        setSongFilename(file.name);  // Save the filename for display
       } else {
         const data = await response.json();
         setError(data.message || 'Upload failed');

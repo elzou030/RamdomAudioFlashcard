@@ -1,37 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-
-const songFolder = path.join(__dirname, '../uploads');
+const multer = require('multer');
 
 // Ensure the uploads directory exists
-if (!fs.existsSync(songFolder)) {
-  fs.mkdirSync(songFolder, { recursive: true });
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Configure multer for song uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const folder = req.body.folderName || '';
-    const folderPath = path.join(songFolder, folder);
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath);
+// Get all folders from the "uploads" directory
+router.get('/folders', (req, res) => {
+  fs.readdir(uploadsDir, (err, folders) => {
+    if (err) {
+      return res.status(500).json({ message: 'Error reading folders' });
     }
-    cb(null, folderPath);
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  }
+    
+    const onlyFolders = folders.filter((folder) =>
+      fs.statSync(path.join(uploadsDir, folder)).isDirectory()
+    );
+
+    res.status(200).json({ folders: onlyFolders });
+  });
 });
 
-const upload = multer({ storage });
-
-// Create a folder
+// Create a new folder
 router.post('/create-folder', (req, res) => {
   const { folderName } = req.body;
-  const folderPath = path.join(songFolder, folderName);
+  const folderPath = path.join(uploadsDir, folderName);
 
   if (!fs.existsSync(folderPath)) {
     fs.mkdirSync(folderPath);
@@ -41,38 +38,28 @@ router.post('/create-folder', (req, res) => {
   }
 });
 
-// Get list of folders
-router.get('/folders', (req, res) => {
-  fs.readdir(songFolder, (err, files) => {
-    if (err) {
-      return res.status(500).json({ message: 'Error reading folders' });
+// Set up multer for song uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const folder = req.body.folderName || '';
+    const folderPath = path.join(uploadsDir, folder);
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
     }
-    const folders = files.filter(file => fs.statSync(path.join(songFolder, file)).isDirectory());
-    res.status(200).json({ folders });
-  });
-});
-
-// Get songs in a folder
-router.get('/folders/:folderName/songs', (req, res) => {
-  const folderPath = path.join(songFolder, req.params.folderName);
-  if (!fs.existsSync(folderPath)) {
-    return res.status(404).json({ message: 'Folder not found' });
+    cb(null, folderPath);
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);  // Save file with its original name
   }
-
-  fs.readdir(folderPath, (err, files) => {
-    if (err) {
-      return res.status(500).json({ message: 'Error reading songs' });
-    }
-    const songs = files.filter(file => !fs.statSync(path.join(folderPath, file)).isDirectory());
-    res.status(200).json({ songs });
-  });
 });
+const upload = multer({ storage });
 
-// Upload a song
+// Route to upload a song to a specific folder
 router.post('/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
+  
   res.status(200).json({ message: 'Song uploaded successfully', filename: req.file.filename });
 });
 
