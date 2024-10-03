@@ -10,14 +10,12 @@ function FolderManager() {
     fetchFolders();
   }, []);
 
-  // Fetch the list of folders
   const fetchFolders = async () => {
     const response = await fetch('http://localhost:5100/api/folders');
     const data = await response.json();
     setFolders(data.folders);
   };
 
-  // Fetch songs in the selected folder
   const fetchSongs = async (folderName) => {
     const response = await fetch(`http://localhost:5100/api/folders/${folderName}/songs`);
     const data = await response.json();
@@ -25,7 +23,6 @@ function FolderManager() {
     setSelectedFolder(folderName);
   };
 
-  // Handle creating a new folder
   const handleCreateFolder = async () => {
     if (!newFolder) return;
 
@@ -38,7 +35,7 @@ function FolderManager() {
     if (response.ok) {
       alert('Folder created successfully');
       setNewFolder('');
-      fetchFolders();  // Refresh folder list
+      fetchFolders();
     } else {
       alert('Failed to create folder');
     }
