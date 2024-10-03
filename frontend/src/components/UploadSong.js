@@ -2,29 +2,29 @@ import React, { useState } from 'react';
 
 function UploadSong({ setSongFilename }) {
   const [file, setFile] = useState(null);
+  const [folder, setFolder] = useState('');
   const [error, setError] = useState('');
 
-  // Handle the file selection from the file input
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
-    setError('');  // Reset error state on file change
-    console.log('Selected file:', e.target.files[0]);  // Log selected file
+    setError('');
   };
 
-  // Handle the file upload to the backend
+  const handleFolderChange = (e) => {
+    setFolder(e.target.value);
+  };
+
   const handleUpload = async () => {
     if (!file) {
       alert('Please select a song to upload');
-      console.error('No file selected');  // Log if no file is selected
       return;
     }
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('folderName', folder);
 
     try {
-      console.log('Uploading file:', file);  // Log the file before upload
-
       const response = await fetch('http://localhost:5100/api/upload', {
         method: 'POST',
         body: formData,
@@ -33,15 +33,12 @@ function UploadSong({ setSongFilename }) {
       if (response.ok) {
         const data = await response.json();
         alert(data.message);
-        setSongFilename(file.name);  // Set the filename in the parent component
-        console.log('Upload successful:', data);  // Log success response
+        setSongFilename(file.name);
       } else {
         const data = await response.json();
         setError(data.message || 'Upload failed');
-        console.error('Upload failed:', data);  // Log failure response
       }
     } catch (error) {
-      console.error('Error during file upload:', error);  // Log any caught errors
       setError('Failed to upload the file');
     }
   };
@@ -50,6 +47,12 @@ function UploadSong({ setSongFilename }) {
     <div>
       <h2>Upload a Song</h2>
       <input type="file" onChange={handleFileChange} accept="audio/*" />
+      <input
+        type="text"
+        placeholder="Folder Name"
+        value={folder}
+        onChange={handleFolderChange}
+      />
       <button onClick={handleUpload}>Upload Song</button>
       {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
