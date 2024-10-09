@@ -25,20 +25,43 @@ const Home = () => {
     }
   };
 
-  // Play a 30-second segment of the random song
-  const playRandomSegment = () => {
-    if (!songPath) return;
-    
-    const audioElement = new Audio(songPath);
-    audioElement.play();
+  // Play a 30-second segment of the random song starting from a random point
+const playRandomSegment = () => {
+  if (!songPath) return;
 
-    setAudio(audioElement);
+  // If an audio element already exists, pause it and set a new start time
+  if (audio) {
+    audio.pause();
+    // Calculate a random start time within the duration of the audio minus 30 seconds
+    const randomStartTime = Math.random() * (audio.duration - 30);
+    audio.currentTime = randomStartTime;
+    audio.play();
 
     // Stop the song after 30 seconds
     setTimeout(() => {
-      audioElement.pause();
+      audio.pause();
     }, 30000);
-  };
+  } else {
+    // Create a new Audio object if one doesn't exist
+    const audioElement = new Audio(songPath);
+    audioElement.addEventListener('loadedmetadata', () => {
+      // Set a random start time when metadata is loaded
+      const randomStartTime = Math.random() * (audioElement.duration - 30);
+      audioElement.currentTime = randomStartTime;
+      audioElement.play();
+
+      // Stop the song after 30 seconds
+      setTimeout(() => {
+        audioElement.pause();
+      }, 30000);
+    });
+
+    // Set the audio state to the new audio element
+    setAudio(audioElement);
+  }
+};
+
+  
 
   return (
     <div>

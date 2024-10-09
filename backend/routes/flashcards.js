@@ -63,4 +63,46 @@ router.post('/upload', upload.single('file'), (req, res) => {
   res.status(200).json({ message: 'Song uploaded successfully', filename: req.file.filename });
 });
 
+
+router.get('/random-song', (req, res) => {
+  // Get all subdirectories and files in the uploads directory
+  fs.readdir(uploadsDir, { withFileTypes: true }, (err, entries) => {
+    if (err) {
+      return res.status(500).json({ message: 'Error reading uploads folder' });
+    }
+
+    // Collect all audio files from subdirectories
+    const audioFiles = [];
+    entries.forEach((entry) => {
+      if (entry.isDirectory()) {
+        const folderPath = path.join(uploadsDir, entry.name);
+        const files = fs.readdirSync(folderPath);
+
+        files.forEach(file => {
+          // Filter out only audio files if needed
+          if (file.endsWith('.mp3') || file.endsWith('.wav')) {
+            audioFiles.push({
+              folder: entry.name,
+              fileName: file
+            });
+          }
+        });
+      }
+    });
+
+    // If no audio files are found, return an error
+    if (audioFiles.length === 0) {
+      return res.status(404).json({ message: 'No audio files found' });
+    }
+
+    // Select a random audio file
+    const randomIndex = Math.floor(Math.random() * audioFiles.length);
+    const randomSong = audioFiles[randomIndex];
+
+    res.json({
+      songName: randomSong.fileName,
+      songPath: `uploads/${randomSong.folder}/${randomSong.fileName}`
+    });
+  });
+});
 module.exports = router;
